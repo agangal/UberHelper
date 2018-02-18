@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 namespace UberHelper
 {
     public class UberClient
-    {
-        private string clientid;
-        private string clientsecret;
+    {        
         private string redirect_uri;
         private string[] scope;
 
@@ -23,8 +21,8 @@ namespace UberHelper
         /// <param name="scope"></param>
         public UberClient(string clientid, string clientsecret, string redirect_uri, string[] scope)
         {
-            this.clientid = clientid;
-            this.clientsecret = clientsecret;
+            UberConstants.ClientId = clientid;
+            UberConstants.StoreSecret(UberConstants.ClientSecretUserName, clientsecret);
             this.redirect_uri = redirect_uri;
             this.scope = scope;
         }
@@ -34,7 +32,7 @@ namespace UberHelper
 
         public async void SignIn()
         {
-            await AuthHelper.Oauth2Flow(clientid, redirect_uri, string.Join(" ", scope));
+            await AuthHelper.Oauth2Flow(UberConstants.ClientId, redirect_uri, UberConstants.ReadSecret(UberConstants.ClientSecretUserName), string.Join(" ", scope));
         }
 
         private string GetUserProfile()

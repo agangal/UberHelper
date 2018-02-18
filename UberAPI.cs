@@ -18,10 +18,11 @@ namespace UberHelper
     {
         #region secrets
 
-        private const string ClientIdUserName = "clientId";
-        private const string AccessTokenUserName = "accesstoken";
-        private const string RefreshTokenUserName = "refreshtoken";
-        private const string UberHelperResource = "uberhelperresource";
+        public const string ClientIdUserName = "clientid";
+        public const string ClientSecretUserName = "clientsecret";
+        public const string AccessTokenUserName = "accesstoken";
+        public const string RefreshTokenUserName = "refreshtoken";
+        private const string resource = "uberhelperresource";
 
         public static string ClientId
         {
@@ -37,20 +38,37 @@ namespace UberHelper
                 }
             }
         }
-        public static void StoreSecret(string resource, string username, string secret)
+
+        /// <summary>
+        /// Add a secret to the PasswordVault
+        /// </summary>
+        /// <param name="username">Username</param>
+        /// <param name="secret">secret/password</param>
+        public static void StoreSecret(string username, string secret)
         {
             PasswordVault vault = new PasswordVault();
+            DeleteSecret(username, secret);
             vault.Add(new PasswordCredential(resource, username, secret));
         }
 
-        public static string ReadSecret(string resource, string username)
+        /// <summary>
+        /// Retrieve a secret/password for that username from the PasswordVault
+        /// </summary>
+        /// <param name="username">username</param>
+        /// <returns></returns>
+        public static string ReadSecret(string username)
         {
             PasswordVault vault = new PasswordVault();
             PasswordCredential credential = vault.Retrieve(resource, username);
             return credential.Password;
         }
 
-        public static void DeleteSecret(string resource, string username, string secret)
+        /// <summary>
+        /// Delete secret from the PasswordVault
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="secret"></param>
+        public static void DeleteSecret(string username, string secret)
         {
             PasswordVault vault = new PasswordVault();
             vault.Remove(new PasswordCredential(resource, username, secret));

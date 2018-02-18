@@ -9,6 +9,8 @@ using Windows.Web.Http;
 
 namespace UberHelper
 {
+    using Newtonsoft.Json;
+
     public static class AuthHelper
     {
         /// <summary>
@@ -17,7 +19,7 @@ namespace UberHelper
         /// <param name="clientID">ClientID of the Uber app</param>
         /// <param name="redirect_uri">Redirect URI</param>
         /// <param name="scope">List of space delimited scopes to request from Uber</param>
-        public static async void Oauth2Flow(string clientID, string redirect_uri, string clientsecret, string scope)
+        public static async Task<bool> Oauth2Flow(string clientID, string redirect_uri, string clientsecret, string scope)
         {
             WebAuthenticationResult authCodeResult = await GetAuthorizationCode(clientID, redirect_uri, scope);
             if (authCodeResult.ResponseStatus == WebAuthenticationStatus.Success)
@@ -41,8 +43,14 @@ namespace UberHelper
                 HttpClient client = new HttpClient();
                 var httpresponseMessage = await client.PostAsync(new Uri(UberAPI.UberAccessTokenUrl), formContent);
                 string response = await httpresponseMessage.Content.ReadAsStringAsync();
-                
+                UberAuthModel authResponse = JsonConvert.DeserializeObject<UberAuthModel>(response);
+                UberConstants.StoreSecret(UberConstants.AccessTokenUserName, authResponse.access_token);
+                UberConstants.StoreSecret(UberConstants.RefreshTokenUserName, authResponse.refresh_token);
+
+                return true;
             }
+
+            return false;
         }
 
         /// <summary>
