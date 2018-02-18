@@ -58,9 +58,16 @@ namespace UberHelper
         /// <returns></returns>
         public static string ReadSecret(string username)
         {
-            PasswordVault vault = new PasswordVault();
-            PasswordCredential credential = vault.Retrieve(resource, username);
-            return credential.Password;
+            try
+            {
+                PasswordVault vault = new PasswordVault();
+                PasswordCredential credential = vault.Retrieve(resource, username);
+                return credential.Password;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>
@@ -70,8 +77,15 @@ namespace UberHelper
         /// <param name="secret"></param>
         public static void DeleteSecret(string username, string secret)
         {
-            PasswordVault vault = new PasswordVault();
-            vault.Remove(new PasswordCredential(resource, username, secret));
+            try
+            {
+                PasswordVault vault = new PasswordVault();
+                vault.Remove(new PasswordCredential(resource, username, secret));
+            }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
         #endregion

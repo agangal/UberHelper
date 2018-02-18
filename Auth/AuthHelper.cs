@@ -21,12 +21,17 @@ namespace UberHelper
         /// <param name="scope">List of space delimited scopes to request from Uber</param>
         public static async Task<bool> Oauth2Flow(string clientID, string redirect_uri, string clientsecret, string scope)
         {
+            if (!String.IsNullOrEmpty(UberConstants.ReadSecret(UberConstants.ClientSecretUserName)))
+            {
+                return true;
+            }
+
             WebAuthenticationResult authCodeResult = await GetAuthorizationCode(clientID, redirect_uri, scope);
             if (authCodeResult.ResponseStatus == WebAuthenticationStatus.Success)
             {
                 string responseData = authCodeResult.ResponseData.ToString();
                 string subResponseData = responseData.Substring(responseData.IndexOf("code"));
-                String[] keyValPairs = subResponseData.Split('&');
+                String[] keyValPairs = subResponseData.Split('=');
                 string authCode = keyValPairs[1];
 
                 Dictionary<string, string> pairs = new Dictionary<string, string>
@@ -61,7 +66,7 @@ namespace UberHelper
         /// <param name="redirect_uri"></param>
         /// <param name="scope"></param>
         /// <returns></returns>
-        public static async Task<WebAuthenticationResult> GetAuthorizationCode(string clientID, string redirect_uri, string scope)
+        private static async Task<WebAuthenticationResult> GetAuthorizationCode(string clientID, string redirect_uri, string scope)
         {
             try
             {                
@@ -73,11 +78,10 @@ namespace UberHelper
                 WebAuthenticationResult WebAuthResult = await WebAuthenticationBroker.AuthenticateAsync(WebAuthenticationOptions.None, StartUri, EndUri);
                 return WebAuthResult;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
         }
-
     }
 }
