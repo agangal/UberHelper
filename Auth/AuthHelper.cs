@@ -5,14 +5,56 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Security.Authentication.Web;
 using Windows.Storage;
+using Windows.Web.Http;
 
 namespace UberHelper
 {
     public static class AuthHelper
     {
-        public static async Task<bool> GetAccessToken(string clientID, string redirect_uri, string scope)
+        /// <summary>
+        /// Oauth2.0 Flow for Uber
+        /// </summary>
+        /// <param name="clientID">ClientID of the Uber app</param>
+        /// <param name="redirect_uri">Redirect URI</param>
+        /// <param name="scope">List of space delimited scopes to request from Uber</param>
+        public static async void Oauth2Flow(string clientID, string redirect_uri, string clientsecret, string scope)
         {
-            string access_token = null;
+            WebAuthenticationResult authCodeResult = await GetAuthorizationCode(clientID, redirect_uri, scope);
+            if (authCodeResult.ResponseStatus == WebAuthenticationStatus.Success)
+            {
+                string responseData = authCodeResult.ResponseData.ToString();
+                string subResponseData = responseData.Substring(responseData.IndexOf("code"));
+                String[] keyValPairs = subResponseData.Split('&');
+                string authCode = keyValPairs[1];
+
+                Dictionary<string, string> pairs = new Dictionary<string, string>
+                {
+                    { "client_secret", clientsecret },
+                    { "client_id", clientID },
+                    { "grant_type", "authorization_code" },
+                    { "redirect_uri", redirect_uri },
+                    { "code", authCode }
+                };
+
+                HttpFormUrlEncodedContent formContent = new HttpFormUrlEncodedContent(pairs);
+
+                HttpClient client = new HttpClient();
+                var httpresponseMessage = await client.PostAsync(new Uri(UberAPI.UberAccessTokenUrl), formContent);
+                string response = await httpresponseMessage.Content.ReadAsStringAsync();
+                
+            }
+        }
+
+        /// <summary>
+        /// Get Authorization Code from Uber.
+        /// The authorization code will be used in the Oauth2.0 flow to get an access token.
+        /// </summary>
+        /// <param name="clientID"></param>
+        /// <param name="redirect_uri"></param>
+        /// <param name="scope"></param>
+        /// <returns></returns>
+        public static async Task<WebAuthenticationResult> GetAuthorizationCode(string clientID, string redirect_uri, string scope)
+        {
             try
             {                
                 String uberAuthUrl = String.Format(UberAPI.UberAuthorizeUrl, Uri.EscapeDataString(clientID), Uri.EscapeDataString(scope), Uri.EscapeDataString(redirect_uri));
@@ -21,42 +63,12 @@ namespace UberHelper
                 
                 // Make web request
                 WebAuthenticationResult WebAuthResult = await WebAuthenticationBroker.AuthenticateAsync(WebAuthenticationOptions.None, StartUri, EndUri);
-                if (WebAuthResult.ResponseStatus == WebAuthenticationStatus.Success)
-                {
-                    string responseData = WebAuthResult.ResponseData.ToString();
-                    string subResponseData = responseData.Substring(responseData.IndexOf("access_token"));
-                    String[] keyValPairs = subResponseData.Split('&');                   
-                    string token_type = null;
-                    for (int i = 0; i < keyValPairs.Length; i++)
-                    {
-                        String[] splits = keyValPairs[i].Split('=');
-                        switch (splits[0])
-                        {
-                            case "access_token":
-                                access_token = splits[1];
-                                break;
-                            case "token_type":
-                                token_type = splits[1];
-                                break;
-                        }
-                    }                    
-                    ApplicationData.Current.LocalSettings.Values["Tokens"] = access_token;
-                }
-                else if (WebAuthResult.ResponseStatus == WebAuthenticationStatus.ErrorHttp)
-                {
-                    return (false);
-                }
-                else
-                {
-                   return (false);
-                }
-
+                return WebAuthResult;
             }
             catch (Exception ex)
             {
-                return (false);
+                return null;
             }
-            return (true);
         }
 
     }

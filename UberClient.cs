@@ -32,9 +32,9 @@ namespace UberHelper
 
         #region public methods
 
-        private async void SignIn()
+        public async void SignIn()
         {
-            await AuthHelper.GetAccessToken(clientid, redirect_uri, string.Join(",", scope));
+            await AuthHelper.Oauth2Flow(clientid, redirect_uri, string.Join(" ", scope));
         }
 
         private string GetUserProfile()
