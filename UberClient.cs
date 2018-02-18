@@ -32,7 +32,17 @@ namespace UberHelper
 
         #region public methods
 
-        private bool UserAuth()
+        private async void SignIn()
+        {
+            await AuthHelper.GetAccessToken(clientid, redirect_uri, string.Join(",", scope));
+        }
+
+        private string GetUserProfile()
+        {
+            throw new NotImplementedException();
+        }
+
+        private string GetProducts()
         {
             throw new NotImplementedException();
         }
